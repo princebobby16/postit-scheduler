@@ -40,7 +40,7 @@ development:
     - apt-get update -qy
     - apt-get install -y ruby-dev
     - gem install dpl
-    - dpl --provider=heroku --app=postit-dev-scheduler --api-key=$HEROKU_API_KEY --run='./bin/goose up'
+    - dpl --provider=heroku --app=postit-dev-scheduler --api-key=$HEROKU_API_KEY
   environment:
     name: Development
     url: https://postit-dev-scheduler.herokuapp.com/
@@ -54,7 +54,7 @@ staging:
     - apt-get update -qy
     - apt-get install -y ruby-dev
     - gem install dpl
-    - dpl --provider=heroku --app=postit-staging-scheduler --api-key=$HEROKU_API_KEY --run='./bin/goose up'
+    - dpl --provider=heroku --app=postit-staging-scheduler --api-key=$HEROKU_API_KEY
   environment:
     name: Staging
     url: https://postit-staging-scheduler.herokuapp.com/
@@ -68,7 +68,7 @@ production:
     - apt-get update -qy
     - apt-get install -y ruby-dev
     - gem install dpl
-    - dpl --provider=heroku --app=postit-prod-scheduler --api-key=$HEROKU_API_KEY --run='./bin/goose up'
+    - dpl --provider=heroku --app=postit-prod-scheduler --api-key=$HEROKU_API_KEY
   environment:
     name: Production
     url: https://postit-prod-scheduler.herokuapp.com/
