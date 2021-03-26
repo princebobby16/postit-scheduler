@@ -3,65 +3,72 @@ package models
 import "time"
 
 type (
-
 	FBPData struct {
-		Data []FacebookPageData 		`json:"data"`
+		Data []FacebookPageData `json:"data"`
 	}
 
 	FacebookPageData struct {
-		AccessToken string		`json:"access_token"`
-		Category string 		`json:"category"`
-		CategoryList []Things 	`json:"category_list"`
-		Name string				`json:"name"`
-		Id string				`json:"id"`
-		Tasks []string			`json:"tasks"`
+		AccessToken  string   `json:"access_token"`
+		Category     string   `json:"category"`
+		CategoryList []Things `json:"category_list"`
+		Name         string   `json:"name"`
+		Id           string   `json:"id"`
+		Tasks        []string `json:"tasks"`
 	}
 
 	Things struct {
-		Id string			`json:"id"`
-		Name string 		`json:"name"`
+		Id   string `json:"id"`
+		Name string `json:"name"`
 	}
 
 	FacebookUserData struct {
-		UserId string
+		UserId      string
 		AccessToken string
 	}
 
 	PostsWithPermission struct {
 		ScheduleId string
-		Posts []Post
+		Profiles   SocialMediaProfiles
+		Posts      []Post
 		PostToFeed bool
 	}
 
-	SinglePostWithPermission struct {
-		ScheduleId string
-		Post Post
-		PostToFeed bool
+	SinglePostWithProfiles struct {
+		Post       Post
+		Profiles SocialMediaProfiles
 	}
 
 	Post struct {
-		ScheduleId   string
-		PostId       string
-		PostMessage  string
-		PostImage    []byte
-		ImageExtension string
-		HashTags     []string
-		PostStatus   bool
-		PostPriority bool
-		CreatedOn    time.Time
-		UpdatedOn    time.Time
+		PostId         string
+		FacebookPostId string
+		PostMessage    string
+		PostImages     [][]byte
+		ImagePaths     []string
+		HashTags       []string
+		PostStatus     bool
+		Scheduled      bool
+		PostPriority   bool
+		CreatedOn      time.Time
+		UpdatedOn      time.Time
+	}
+
+	SocialMediaProfiles struct {
+		Facebook []string `json:"facebook"`
+		Twitter  []string `json:"twitter"`
+		LinkedIn []string `json:"linked_in"`
 	}
 
 	PostSchedule struct {
-		ScheduleId    string    `json:"schedule_id"`
-		ScheduleTitle string    `json:"schedule_title"`
-		PostToFeed bool 		`json:"post_to_feed"`
-		From          time.Time `json:"from"`
-		To            time.Time `json:"to"`
-		PostIds       []string  `json:"post_ids"`
-		Duration      float64   `json:"duration"`
-		CreatedOn     time.Time `json:"created_on"`
-		UpdatedOn     time.Time `json:"updated_on"`
+		ScheduleId    string              `json:"schedule_id"`
+		ScheduleTitle string              `json:"schedule_title"`
+		PostToFeed    bool                `json:"post_to_feed"`
+		From          time.Time           `json:"from"`
+		To            time.Time           `json:"to"`
+		PostIds       []string            `json:"post_ids"`
+		Duration      float64             `json:"duration"`
+		Profiles      SocialMediaProfiles `json:"profiles"`
+		CreatedOn     time.Time           `json:"created_on"`
+		UpdatedOn     time.Time           `json:"updated_on"`
 	}
 
 	FetchPostResponse struct {

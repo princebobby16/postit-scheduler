@@ -1,3 +1,6 @@
-.idea/
+.idea
 .env
-**/logs/*.log
+go_build_gitlab_com_pbobby001_postit_scheduler.exe
+pkg/logs/common.log
+pkg/logs/critical.log
+pkg/logs/error.log

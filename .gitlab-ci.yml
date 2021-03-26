@@ -1,8 +1,6 @@
-# This file is a template, and might need editing before it works on your project.
 image: golang:latest
 
 variables:
-  # Please edit to your GitLab project
   REPO_NAME: gitlab.com/pbobby001/postit-scheduler
 
 # The problem is that to be able to use go get, one needs to put

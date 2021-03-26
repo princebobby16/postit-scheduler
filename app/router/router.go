@@ -22,7 +22,7 @@ func InitRoutes() *mux.Router {
 
 	router := mux.NewRouter()
 
-	routes := Routes{
+	routes := Routes {
 		// health check
 		Route{
 			Name:    "Health Check",
@@ -36,6 +36,7 @@ func InitRoutes() *mux.Router {
 			Method:  http.MethodPost,
 			Handler: controllers.GetSchedule,
 		},
+
 	}
 
 	for _, route := range routes {

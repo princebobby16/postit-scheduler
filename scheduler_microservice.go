@@ -17,6 +17,9 @@ import (
 )
 
 func main() {
+
+	//defer profile.Start().Stop()
+
 	defer logs.Logger.Flush()
 	var wait time.Duration
 	flag.DurationVar(&wait, "graceful-timeout", time.Second*15, "the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
@@ -27,7 +30,7 @@ func main() {
 
 	r := router.InitRoutes()
 
-	origins := handlers.AllowedOrigins([]string{/*"https://postit-ui.herokuapp.com"*/ "*"})
+	origins := handlers.AllowedOrigins([]string{ /*"https://postit-ui.herokuapp.com"*/ "*"})
 	headers := handlers.AllowedHeaders([]string{
 		"Content-Type",
 		"Content-Length",
@@ -59,12 +62,12 @@ func main() {
 
 	address := ":" + port
 
-	server := &http.Server {
+	server := &http.Server{
 		Addr: address,
 		// Good practice to set timeouts to avoid Slowloris attacks.
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
-		IdleTimeout:  time.Second * 60,
+		IdleTimeout:  time.Second * 6,
 		Handler:      handlers.CORS(origins, headers, methods)(r), // Pass our instance of gorilla/mux in.
 	}
 
