@@ -56,7 +56,7 @@ func main() {
 	var port string
 	port = os.Getenv("PORT")
 	if port == "" {
-		logs.Logger.Warn("Defaulting to port 7894")
+		_ = logs.Logger.Warn("Defaulting to port 7894")
 		port = "7894"
 	}
 
@@ -100,11 +100,15 @@ func main() {
 
 	// Doesn't block if no connections, but will otherwise wait
 	// until the timeout deadline.
-	_ = server.Shutdown(ctx)
+	err := server.Shutdown(ctx)
+	if err != nil {
+		_ = logs.Logger.Error(err)
+		os.Exit(0)
+	}
 
 	// Optionally, you could run server.Shutdown in a goroutine and block on
 	// <-ctx.Done() if your application should wait for other services
 	// to finalize based on context cancellation.
-	logs.Logger.Warn("shutting down")
+	_ = logs.Logger.Warn("shutting down")
 	os.Exit(0)
 }

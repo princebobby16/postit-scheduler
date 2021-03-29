@@ -22,7 +22,13 @@ func init() {
 		log.Println(err)
 		return
 	}
-	defer file.Close()
+	defer func() {
+		err = file.Close()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+	}()
 	if _, err := os.Stat(critical); !os.IsNotExist(err) {
 		// Do nothing
 	}
@@ -32,7 +38,13 @@ func init() {
 		log.Println(err)
 		return
 	}
-	defer file.Close()
+	defer func() {
+		err = file.Close()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+	}()
 
 	if _, err := os.Stat(errorLog); !os.IsNotExist(err) {
 		// Do nothing
@@ -43,13 +55,19 @@ func init() {
 		log.Println(err)
 		return
 	}
-	defer file.Close()
-	
+	defer func() {
+		err = file.Close()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+	}()
+
 	Logger = see.Disabled
 	loadAppConfig()
 }
 
-func loadAppConfig () {
+func loadAppConfig() {
 
 	appConfig := `
 <seelog type="sync">
@@ -112,6 +130,6 @@ func loadAppConfig () {
 	UseLog(logger)
 }
 
-func UseLog(log see.LoggerInterface)  {
+func UseLog(log see.LoggerInterface) {
 	Logger = log
 }

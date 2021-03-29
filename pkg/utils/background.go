@@ -50,7 +50,7 @@ func HibernateSchedule(connection *sql.DB, schedule models.PostSchedule, namespa
 	}
 }
 
-func SchedulePosts(schedules <-chan *models.PostSchedule, postedToFacebook <-chan bool, postedToTwitter chan bool, postedToLinkedIn chan bool, facebookPost chan<- models.SinglePostWithProfiles, twitterPost chan models.SinglePostWithProfiles, linkedInPost chan models.SinglePostWithProfiles, duration float64, connection *sql.DB, namespace string) {
+func SchedulePosts(schedules <-chan *models.PostSchedule, postedToFacebook <-chan bool, postedToTwitter chan bool, postedToLinkedIn chan bool, facebookPost chan<- models.SinglePostWithProfiles, twitterPost chan models.SinglePostWithProfiles, linkedInPost chan models.SinglePostWithProfiles, connection *sql.DB, namespace string) {
 	// Listen for posts from the other goroutine
 	for s := range schedules {
 		logs.Logger.Info("scheduling posts now...\nlooping through them.")
@@ -84,19 +84,18 @@ func SchedulePosts(schedules <-chan *models.PostSchedule, postedToFacebook <-cha
 			}
 
 			if len(s.Profiles.Twitter) != 0 {
-				twitterPost <- models.SinglePostWithProfiles {
+				twitterPost <- models.SinglePostWithProfiles{
 					Post:     post,
 					Profiles: s.Profiles,
 				}
 			}
 
 			if len(s.Profiles.LinkedIn) != 0 {
-				linkedInPost <- models.SinglePostWithProfiles {
+				linkedInPost <- models.SinglePostWithProfiles{
 					Post:     post,
 					Profiles: s.Profiles,
 				}
 			}
-
 
 			// making sure that the posts have been posted successfully
 			if len(s.Profiles.Facebook) != 0 {
@@ -111,7 +110,7 @@ func SchedulePosts(schedules <-chan *models.PostSchedule, postedToFacebook <-cha
 			}
 
 			if len(s.Profiles.Twitter) != 0 {
-				if twStatus := <- postedToTwitter; twStatus == false {
+				if twStatus := <-postedToTwitter; twStatus == false {
 					logs.Logger.Info(twStatus)
 					// retry
 					twitterPost <- models.SinglePostWithProfiles{
@@ -122,7 +121,7 @@ func SchedulePosts(schedules <-chan *models.PostSchedule, postedToFacebook <-cha
 			}
 
 			if len(s.Profiles.LinkedIn) != 0 {
-				if liStatus := <- postedToLinkedIn; liStatus == false {
+				if liStatus := <-postedToLinkedIn; liStatus == false {
 					logs.Logger.Info(liStatus)
 					// retry
 					linkedInPost <- models.SinglePostWithProfiles{
@@ -140,7 +139,7 @@ func SchedulePosts(schedules <-chan *models.PostSchedule, postedToFacebook <-cha
 	logs.Logger.Info("Schedule done")
 }
 
-func SendPostToFacebook(post <-chan models.SinglePostWithProfiles, posted chan <- bool, namespace string, connection *sql.DB) {
+func SendPostToFacebook(post <-chan models.SinglePostWithProfiles, posted chan<- bool, namespace string, connection *sql.DB) {
 	for p := range post {
 		logs.Logger.Info("facebook")
 		logs.Logger.Info(p.Post.PostMessage, "\a\t<=======>\t", p.Post.ImagePaths)
@@ -162,7 +161,7 @@ func SendPostToFacebook(post <-chan models.SinglePostWithProfiles, posted chan <
 	}
 }
 
-func SendPostToTwitter(post <- chan models.SinglePostWithProfiles, posted chan <- bool, namespace string, connection *sql.DB) {
+func SendPostToTwitter(post <-chan models.SinglePostWithProfiles, posted chan<- bool, namespace string, connection *sql.DB) {
 	for p := range post {
 		logs.Logger.Info("twitter")
 		logs.Logger.Info(p.Post.PostMessage, "\t<======>\t", p.Post.ImagePaths)

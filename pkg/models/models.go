@@ -34,7 +34,7 @@ type (
 	}
 
 	SinglePostWithProfiles struct {
-		Post       Post
+		Post     Post
 		Profiles SocialMediaProfiles
 	}
 

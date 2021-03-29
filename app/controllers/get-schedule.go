@@ -45,7 +45,7 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 	postedToLikedIn := make(chan bool)
 
 	go utils.HibernateSchedule(db.Connection, schedule, tenantNamespace, scheduleChan)
-	go utils.SchedulePosts(scheduleChan, postedToFacebook, postedToTwitter, postedToLikedIn, facebookPost, twitterPost, linkedInPost, schedule.Duration, db.Connection, tenantNamespace)
+	go utils.SchedulePosts(scheduleChan, postedToFacebook, postedToTwitter, postedToLikedIn, facebookPost, twitterPost, linkedInPost, db.Connection, tenantNamespace)
 
 	if len(schedule.Profiles.Facebook) != 0 {
 		go utils.SendPostToFacebook(facebookPost, postedToFacebook, tenantNamespace, db.Connection)

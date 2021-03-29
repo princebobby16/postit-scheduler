@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func IndexHandler(w http.ResponseWriter, r *http.Request) {
+func IndexHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(struct {
 		Status      string  `json:"status"`

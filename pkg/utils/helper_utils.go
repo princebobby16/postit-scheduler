@@ -149,7 +149,10 @@ func PostToFacebook(post models.SinglePostWithProfiles, namespace string, connec
 				"access_token": pageData.AccessToken,
 				"message":      message,
 			})
-			logs.Logger.Info(resp.Get("id"))
+			if err != nil {
+				return err
+			}
+			logs.Logger.Infof("PostID: %s", resp.Get("id"))
 		}
 
 	} // for loop post.Profiles.Facebook
@@ -157,11 +160,13 @@ func PostToFacebook(post models.SinglePostWithProfiles, namespace string, connec
 	return nil
 }
 
+//goland:noinspection GoUnusedParameter,GoUnusedParameter,GoUnusedParameter
 func PostToTwitter(p models.SinglePostWithProfiles, namespace string, connection *sql.DB) error {
 
 	return nil
 }
 
+//goland:noinspection GoUnusedParameter,GoUnusedParameter,GoUnusedParameter
 func PostToLinkedIn(p models.SinglePostWithProfiles, namespace string, connection *sql.DB) error {
 
 	return nil
@@ -186,135 +191,3 @@ func GeneratePostMessageWithHashTags(post models.Post) (string, error) {
 
 	return m, nil
 }
-
-/*func Page(post models.Post, token string, id string, nmsp string) (facebook.Result, error) {
-
-	postMessage, err := GeneratePostMessageWithHashTags(post)
-	if err != nil {
-		return nil, err
-	}
-	logs.Logger.Info(postMessage)
-
-	logs.Logger.Info("Retrieving page info from facebook")
-	// Get a list of pages first
-	result, err := facebook.Get("/"+id+"/accounts",
-		facebook.Params{
-			"access_token": token,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// Decode the data into fbPageData object
-	var fbPageData models.FBPData
-	err = result.Decode(&fbPageData)
-	if err != nil {
-		return nil, err
-	}
-
-	logs.Logger.Info(fbPageData)
-
-	if fbPageData.Data != nil {
-		for _, d := range fbPageData.Data {
-			if post.PostImages == nil {
-				logs.Logger.Info("Posting Without Image")
-				_res, err := facebook.Post("/"+d.Id+"/feed", facebook.Params{
-					"message":      postMessage,
-					"access_token": d.AccessToken,
-				})
-				if err != nil {
-					logs.Logger.Error(err)
-					return nil, err
-				}
-				logs.Logger.Info("Posted: ", _res.Get("id"))
-
-			} else if post.PostImages != nil {
-				logs.Logger.Info("Posting With Image")
-				logs.Logger.Info("image Extension: ", post.ImagePaths)
-
-				for i := 0; i < len(post.PostImages); i++ {
-					wd, err := os.Getwd()
-					if err != nil {
-						_ = logs.Logger.Error(err)
-						return nil, err
-					}
-
-					// join the working directory path with the path for image storage
-					join := filepath.Join(wd, "pkg/"+nmsp)
-
-					// create a new directory for storing the image
-					err = os.Mkdir(join, 0755)
-					if err != nil {
-						if os.IsExist(err) {
-							_ = logs.Logger.Warn(err)
-						} else {
-							//_ = logs.Logger.Error(err)
-							return nil, err
-						}
-					}
-				}
-
-				//var completeImagePath string
-				//var paths []string
-				//for i, e := range post.ImagePaths {
-				//	logs.Logger.Info("Creating image file")
-				//	blob, err := os.Create(post.PostId + "." + e)
-				//	if err != nil {
-				//		return nil, err
-				//	}
-				//
-				//	logs.Logger.Info("Writing image content to file")
-				//	err = ioutil.WriteFile(blob.Name(), post.PostImages[i], os.ModeAppend)
-				//	if err != nil {
-				//		return nil, err
-				//	}
-				//	logs.Logger.Info(blob.Name())
-				//
-				//	logs.Logger.Info("Getting image full path")
-				//	wd, err := os.Getwd()
-				//	if err != nil {
-				//		return nil, err
-				//	}
-				//
-				//	completeImagePath = filepath.Join(wd, blob.Name())
-				//	logs.Logger.Info(completeImagePath)
-				//	paths = append(paths, completeImagePath)
-				//
-				//
-				//	//resp, err := facebook.Post("/" + d.Id + "/photos", facebook.Params {
-				//	//	"published":      false,
-				//	//	"file": facebook.File(completeImagePath),
-				//	//	"access_token": d.AccessToken,
-				//	//})
-				//
-				//
-				//}
-				//_res, err := facebook.Post("/" + d.Id + "/photos", facebook.Params {
-				//	"message":      postMessage,
-				//	"file": facebook.File(),
-				//	"access_token": d.AccessToken,
-				//})
-				//if err != nil {
-				//	logs.Logger.Error(err)
-				//	return err
-				//}
-				//logs.Logger.Info("Posted: ", _res.Get("id"))
-				//for _, path := range paths {
-				//	// Delete file
-				//	logs.Logger.Info("Deleting Image File From Directory")
-				//	err = os.Remove(path)
-				//	if err != nil {
-				//		return nil, err
-				//	}
-				//}
-				log.Println("@done")
-			}
-		}
-	} else {
-		logs.Logger.Warn("No Facebook Pages Found")
-		return nil, errors.New("no facebook pages found")
-	}
-
-	return nil, nil
-}*/
