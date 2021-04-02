@@ -59,12 +59,12 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 		go utils.SendPostToLinkedIn(linkedInPost, postedToLikedIn, tenantNamespace, db.Connection)
 	}
 
-	var response = models.StandardResponse{
-		Data: models.Data{
+	var response = models.StandardResponse {
+		Data: models.Data {
 			Id:        transactionId,
 			UiMessage: "Schedule received and being worked on",
 		},
-		Meta: models.Meta{
+		Meta: models.Meta {
 			Timestamp:     time.Now(),
 			TransactionId: transactionId,
 			TraceId:       "",

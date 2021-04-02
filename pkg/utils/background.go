@@ -18,13 +18,8 @@ func HibernateSchedule(connection *sql.DB, schedule models.PostSchedule, namespa
 			if schedule.From.Before(time.Now()) || schedule.From.Equal(time.Now()) {
 				// Do this
 				logs.Logger.Info("Schedule is due")
-
 				// update the is_due status in the db
-				stmt := fmt.Sprintf("UPDATE %s.schedule SET is_due = $1 WHERE schedule_id = $2;", namespace)
-				logs.Logger.Info("Updating the isDue schedule status")
-				_, err := connection.Exec(stmt, true, schedule.ScheduleId)
-				if err != nil {
-					_ = logs.Logger.Error(err)
+				if ChangeScheduleStatus(connection, schedule, namespace) {
 					return
 				}
 
@@ -36,24 +31,30 @@ func HibernateSchedule(connection *sql.DB, schedule models.PostSchedule, namespa
 				time.Sleep(schedule.From.Sub(time.Now()))
 				logs.Logger.Info("Due now")
 
-				stmt := fmt.Sprintf("UPDATE %s.schedule SET is_due = $1 WHERE schedule_id = $2;", namespace)
-				logs.Logger.Info("Updating the isDue schedule status")
-				_, err := connection.Exec(stmt, true, schedule.ScheduleId)
-				if err != nil {
-					_ = logs.Logger.Error(err)
+				if ChangeScheduleStatus(connection, schedule, namespace) {
 					return
 				}
-
 				scheduleChan <- &schedule
 			}
 		}
 	}
 }
 
+func ChangeScheduleStatus(connection *sql.DB, schedule models.PostSchedule, namespace string) bool {
+	stmt := fmt.Sprintf("UPDATE %s.schedule SET is_due = $1 WHERE schedule_id = $2;", namespace)
+	logs.Logger.Info("Updating the isDue schedule status")
+	_, err := connection.Exec(stmt, true, schedule.ScheduleId)
+	if err != nil {
+		_ = logs.Logger.Error(err)
+		return true
+	}
+	return false
+}
+
 func SchedulePosts(schedules <-chan *models.PostSchedule, postedToFacebook <-chan bool, postedToTwitter chan bool, postedToLinkedIn chan bool, facebookPost chan<- models.SinglePostWithProfiles, twitterPost chan models.SinglePostWithProfiles, linkedInPost chan models.SinglePostWithProfiles, connection *sql.DB, namespace string) {
-	// Listen for posts from the other goroutine
+	// Listen for schedules from the other goroutine
 	for s := range schedules {
-		logs.Logger.Info("scheduling posts now...\nlooping through them.")
+		logs.Logger.Info("scheduling posts now ... looping through them.")
 		for _, postId := range s.PostIds {
 			stmt := fmt.Sprintf(`SELECT * FROM %s.post WHERE post_id = $1;`, namespace)
 			var post models.Post
@@ -99,8 +100,8 @@ func SchedulePosts(schedules <-chan *models.PostSchedule, postedToFacebook <-cha
 
 			// making sure that the posts have been posted successfully
 			if len(s.Profiles.Facebook) != 0 {
-				if fbStatus := <-postedToFacebook; fbStatus == false {
-					logs.Logger.Info(fbStatus)
+				if fbStatus := <- postedToFacebook; fbStatus == false {
+					logs.Logger.Info("Facebook Posted status: ", fbStatus, " retrying ...")
 					// retry
 					facebookPost <- models.SinglePostWithProfiles{
 						Post:     post,
@@ -110,8 +111,9 @@ func SchedulePosts(schedules <-chan *models.PostSchedule, postedToFacebook <-cha
 			}
 
 			if len(s.Profiles.Twitter) != 0 {
-				if twStatus := <-postedToTwitter; twStatus == false {
-					logs.Logger.Info(twStatus)
+				if twStatus := <- postedToTwitter; twStatus == false {
+					logs.Logger.Info("Twitter Posted status: ", twStatus, " retrying ...")
+
 					// retry
 					twitterPost <- models.SinglePostWithProfiles{
 						Post:     post,
@@ -121,8 +123,8 @@ func SchedulePosts(schedules <-chan *models.PostSchedule, postedToFacebook <-cha
 			}
 
 			if len(s.Profiles.LinkedIn) != 0 {
-				if liStatus := <-postedToLinkedIn; liStatus == false {
-					logs.Logger.Info(liStatus)
+				if liStatus := <- postedToLinkedIn; liStatus == false {
+					logs.Logger.Info("LinkedIn Posted status: ", liStatus, " retrying ...")
 					// retry
 					linkedInPost <- models.SinglePostWithProfiles{
 						Post:     post,
@@ -132,7 +134,7 @@ func SchedulePosts(schedules <-chan *models.PostSchedule, postedToFacebook <-cha
 			}
 
 			// waiting for the next post
-			logs.Logger.Info("waiting for next post")
+			logs.Logger.Info("waiting for next post for ", s.Duration, " seconds")
 			time.Sleep(time.Duration(s.Duration) * time.Second)
 		} // for loop s.PostIds
 	} // for loop schedules
@@ -149,12 +151,12 @@ func SendPostToFacebook(post <-chan models.SinglePostWithProfiles, posted chan<-
 			_ = logs.Logger.Error(err)
 			posted <- false
 		} else {
-
 			stmt := fmt.Sprintf("UPDATE %s.post SET post_status = $1 WHERE post_id = $2;", namespace)
+			logs.Logger.Info(p.Post.PostId)
 			_, err = connection.Exec(stmt, true, p.Post.PostId)
 			if err != nil {
 				_ = logs.Logger.Error(err)
-				posted <- true
+				return
 			}
 			posted <- true
 		}
@@ -175,7 +177,7 @@ func SendPostToTwitter(post <-chan models.SinglePostWithProfiles, posted chan<- 
 			_, err = connection.Exec(stmt, true, p.Post.PostId)
 			if err != nil {
 				_ = logs.Logger.Error(err)
-				posted <- true
+				return
 			}
 			posted <- true
 		}
@@ -196,7 +198,7 @@ func SendPostToLinkedIn(post <-chan models.SinglePostWithProfiles, posted chan<-
 			_, err = connection.Exec(stmt, true, p.Post.PostId)
 			if err != nil {
 				_ = logs.Logger.Error(err)
-				posted <- true
+				return
 			}
 			posted <- true
 		}
