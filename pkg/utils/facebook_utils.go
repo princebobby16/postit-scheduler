@@ -17,69 +17,69 @@ func PostToFacebook(post models.SinglePostWithProfiles, namespace string, connec
 	// make sure user wants to post to fb
 	// iterate over the facebook ids
 	// to get the access_token stored in the database
-	for _, fb := range post.Profiles.Facebook {
-		// build the query
-		stmt := fmt.Sprintf(
-			`SELECT user_id, user_access_token FROM %s.application_info WHERE user_id = $1;`,
-			namespace,
-		)
-
-		// create an fbUser placeholder to store facebook data
-		var fbUser models.FacebookUserData
-		// run the query and store the value in the fbUser placeholder
-		err := connection.QueryRow(stmt, fb).Scan(
-			&fbUser.UserId,
-			&fbUser.AccessToken,
-		)
-		if err != nil {
-			return err
-		}
-
-		logs.Logger.Info("Retrieving page info from facebook")
-		// Get a list of pages first
-		result, err := facebook.Get("/"+fbUser.UserId+"/accounts",
-			facebook.Params{
-				"access_token": fbUser.AccessToken,
-			},
-		)
-		if err != nil {
-			return err
-		}
-
-		// Decode the data into fbPageData object
-		var fbPageData models.FBPData
-		err = result.Decode(&fbPageData)
-		if err != nil {
-			return err
-		}
-		logs.Logger.Info(fbPageData)
-
-		if post.Post.PostImages != nil {
-			// send post with image(s)
-			resp, err := SendPostWithImageToFacebook(post, namespace, fbPageData)
-			if err != nil {
-				return err
-			}
-
-			err = SetFacebookPostIdColumn(resp, namespace, err, connection)
-			if err != nil {
-				return err
-			}
-		} else {
-			//send post without image
-			resp, err := SendPostWithoutImageToFacebook(post, fbPageData)
-			if err != nil {
-				return err
-			}
-			logs.Logger.Info(resp.Get("id"))
-
-			err = SetFacebookPostIdColumn(resp, namespace, err, connection)
-			if err != nil {
-				return err
-			}
-		}
-
-	} // for loop post.Profiles.Facebook
+	//for _, fb := range post.Profiles.Facebook {
+	//	// build the query
+	//	stmt := fmt.Sprintf(
+	//		`SELECT user_id, user_access_token FROM %s.application_info WHERE user_id = $1;`,
+	//		namespace,
+	//	)
+	//
+	//	// create an fbUser placeholder to store facebook data
+	//	var fbUser models.FacebookUserData
+	//	// run the query and store the value in the fbUser placeholder
+	//	err := connection.QueryRow(stmt, fb).Scan(
+	//		&fbUser.UserId,
+	//		&fbUser.AccessToken,
+	//	)
+	//	if err != nil {
+	//		return err
+	//	}
+	//
+	//	logs.Logger.Info("Retrieving page info from facebook")
+	//	// Get a list of pages first
+	//	result, err := facebook.Get("/"+fbUser.UserId+"/accounts",
+	//		facebook.Params{
+	//			"access_token": fbUser.AccessToken,
+	//		},
+	//	)
+	//	if err != nil {
+	//		return err
+	//	}
+	//
+	//	// Decode the data into fbPageData object
+	//	var fbPageData models.FBPData
+	//	err = result.Decode(&fbPageData)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	logs.Logger.Info(fbPageData)
+	//
+	//	if post.Post.PostImages != nil {
+	//		// send post with image(s)
+	//		resp, err := SendPostWithImageToFacebook(post, namespace, fbPageData)
+	//		if err != nil {
+	//			return err
+	//		}
+	//
+	//		err = SetFacebookPostIdColumn(resp, namespace, err, connection)
+	//		if err != nil {
+	//			return err
+	//		}
+	//	} else {
+	//		//send post without image
+	//		resp, err := SendPostWithoutImageToFacebook(post, fbPageData)
+	//		if err != nil {
+	//			return err
+	//		}
+	//		logs.Logger.Info(resp.Get("id"))
+	//
+	//		err = SetFacebookPostIdColumn(resp, namespace, err, connection)
+	//		if err != nil {
+	//			return err
+	//		}
+	//	}
+	//
+	//} // for loop post.Profiles.Facebook
 
 	return nil
 }

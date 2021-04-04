@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/twinj/uuid"
 	"gitlab.com/pbobby001/postit-scheduler/db"
 	"gitlab.com/pbobby001/postit-scheduler/pkg/logs"
@@ -36,6 +37,20 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 	}
 	logs.Logger.Info("Schedule: ", schedule)
 
+	query := fmt.Sprintf("INSERT INTO general_schedule_table(schedule_id, tenant_namespace, duration_per_post) VALUES ($1, $2, $3)")
+
+	_, err = db.Connection.Exec(
+		query,
+		&schedule.ScheduleId,
+		&tenantNamespace,
+		&schedule.Duration,
+	)
+	if err != nil {
+		_ = logs.Logger.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	facebookPost := make(chan models.SinglePostWithProfiles, 1)
 	twitterPost := make(chan models.SinglePostWithProfiles, 1)
 	linkedInPost := make(chan models.SinglePostWithProfiles, 1)
@@ -48,23 +63,23 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 	go utils.SchedulePosts(scheduleChan, postedToFacebook, postedToTwitter, postedToLikedIn, facebookPost, twitterPost, linkedInPost, db.Connection, tenantNamespace)
 
 	if len(schedule.Profiles.Facebook) != 0 {
-		go utils.SendPostToFacebook(facebookPost, postedToFacebook, tenantNamespace, db.Connection)
+		go utils.SendPostToFacebook(facebookPost, postedToFacebook, tenantNamespace, schedule.ScheduleId, db.Connection)
 	}
 
 	if len(schedule.Profiles.Twitter) != 0 {
-		go utils.SendPostToTwitter(twitterPost, postedToTwitter, tenantNamespace, db.Connection)
+		go utils.SendPostToTwitter(twitterPost, postedToTwitter, tenantNamespace, schedule.ScheduleId, db.Connection)
 	}
 
 	if len(schedule.Profiles.LinkedIn) != 0 {
-		go utils.SendPostToLinkedIn(linkedInPost, postedToLikedIn, tenantNamespace, db.Connection)
+		go utils.SendPostToLinkedIn(linkedInPost, postedToLikedIn, tenantNamespace, schedule.ScheduleId, db.Connection)
 	}
 
-	var response = models.StandardResponse {
-		Data: models.Data {
+	var response = models.StandardResponse{
+		Data: models.Data{
 			Id:        transactionId,
 			UiMessage: "Schedule received and being worked on",
 		},
-		Meta: models.Meta {
+		Meta: models.Meta{
 			Timestamp:     time.Now(),
 			TransactionId: transactionId,
 			TraceId:       "",
