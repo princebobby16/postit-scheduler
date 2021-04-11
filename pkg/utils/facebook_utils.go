@@ -61,7 +61,7 @@ func PostToFacebook(post models.SinglePostWithProfiles, namespace string, connec
 				return err
 			}
 
-			err = SetFacebookPostIdColumn(resp, namespace, err, connection)
+			err = SetFacebookPostIdColumn(resp, namespace, err, post.Post.PostId, connection)
 			if err != nil {
 				return err
 			}
@@ -73,7 +73,7 @@ func PostToFacebook(post models.SinglePostWithProfiles, namespace string, connec
 			}
 			logs.Logger.Info(resp.Get("id"))
 
-			err = SetFacebookPostIdColumn(resp, namespace, err, connection)
+			err = SetFacebookPostIdColumn(resp, namespace, err, post.Post.PostId, connection)
 			if err != nil {
 				return err
 			}
@@ -84,10 +84,11 @@ func PostToFacebook(post models.SinglePostWithProfiles, namespace string, connec
 	return nil
 }
 
-func SetFacebookPostIdColumn(resp facebook.Result, namespace string, err error, connection *sql.DB) error {
-	if resp.Get("id") == "" {
-		query := fmt.Sprintf(`UPDATE TABLE %s.post SET facebook_post_id = $1 WHERE post_id = $2;`, namespace)
-		_, err = connection.Exec(query, resp.Get("id"))
+func SetFacebookPostIdColumn(resp facebook.Result, namespace string, err error, id string, connection *sql.DB) error {
+	fbId := fmt.Sprintf("%s", resp.Get("id"))
+	if fbId != "" {
+		query := fmt.Sprintf(`UPDATE %s.post SET facebook_post_id = $1 WHERE post_id = $2;`, namespace)
+		_, err = connection.Exec(query, resp.Get("id"), id)
 		if err != nil {
 			return err
 		}
@@ -119,9 +120,9 @@ func SendPostWithImageToFacebook(post models.SinglePostWithProfiles, namespace s
 	var ids []interface{}
 
 	for j := 0; j < len(post.Post.ImagePaths); j++ {
-		images := strings.Split(post.Post.ImagePaths[j], "\\")
+		images := strings.Split(post.Post.ImagePaths[j], "/")
 		imageName = images[len(images)-1]
-		imageFile, err := os.Create(imageDir + "\\" + imageName)
+		imageFile, err := os.Create(imageDir + "/" + imageName)
 		if err != nil {
 			return facebook.Result{}, err
 		}
@@ -148,11 +149,6 @@ func SendPostWithImageToFacebook(post models.SinglePostWithProfiles, namespace s
 				id = resp.Get("id")
 				ids = append(ids, id)
 			}
-		}
-
-		err = os.RemoveAll(imageDir)
-		if err != nil {
-			return facebook.Result{}, err
 		}
 
 	} // for loop post.Post.ImagePaths
