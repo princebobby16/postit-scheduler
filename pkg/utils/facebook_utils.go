@@ -26,12 +26,14 @@ func PostToFacebook(post models.SinglePostWithProfiles, namespace string, connec
 
 		// create an fbUser placeholder to store facebook data
 		var fbUser models.FacebookUserData
+		logs.Logger.Info(fb)
 		// run the query and store the value in the fbUser placeholder
 		err := connection.QueryRow(stmt, fb).Scan(
 			&fbUser.UserId,
 			&fbUser.AccessToken,
 		)
 		if err != nil {
+			_ = logs.Logger.Error(err)
 			return err
 		}
 
@@ -61,7 +63,7 @@ func PostToFacebook(post models.SinglePostWithProfiles, namespace string, connec
 				return err
 			}
 
-			err = SetFacebookPostIdColumn(resp, namespace, err, post.Post.PostId, connection)
+			err = SetFacebookPostIdColumn(resp, namespace, err, post.Post.PostId, fbUser.UserId, connection)
 			if err != nil {
 				return err
 			}
@@ -73,7 +75,7 @@ func PostToFacebook(post models.SinglePostWithProfiles, namespace string, connec
 			}
 			logs.Logger.Info(resp.Get("id"))
 
-			err = SetFacebookPostIdColumn(resp, namespace, err, post.Post.PostId, connection)
+			err = SetFacebookPostIdColumn(resp, namespace, err, post.Post.PostId, fbUser.UserId, connection)
 			if err != nil {
 				return err
 			}
@@ -84,11 +86,11 @@ func PostToFacebook(post models.SinglePostWithProfiles, namespace string, connec
 	return nil
 }
 
-func SetFacebookPostIdColumn(resp facebook.Result, namespace string, err error, id string, connection *sql.DB) error {
+func SetFacebookPostIdColumn(resp facebook.Result, namespace string, err error, id string, userId string, connection *sql.DB) error {
 	fbId := fmt.Sprintf("%s", resp.Get("id"))
 	if fbId != "" {
-		query := fmt.Sprintf(`UPDATE %s.post SET facebook_post_id = $1 WHERE post_id = $2;`, namespace)
-		_, err = connection.Exec(query, resp.Get("id"), id)
+		query := fmt.Sprintf(`UPDATE %s.post SET facebook_post_id = $1, facebook_user_id = $2 WHERE post_id = $3;`, namespace)
+		_, err = connection.Exec(query, &userId, &fbId, id)
 		if err != nil {
 			return err
 		}

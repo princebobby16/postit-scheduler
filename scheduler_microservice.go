@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	see "github.com/cihub/seelog"
 	"github.com/gorilla/handlers"
 	_ "github.com/joho/godotenv/autoload"
 	"gitlab.com/pbobby001/postit-scheduler/app/middlewares"
@@ -17,8 +16,6 @@ import (
 )
 
 func main() {
-
-	//defer profile.Start().Stop()
 
 	defer logs.Logger.Flush()
 	var wait time.Duration
@@ -79,9 +76,9 @@ func main() {
 	go func() {
 		logs.Logger.Info("Server running on port", address)
 		if err := server.ListenAndServe(); err != nil {
-			a := see.Warn(err)
+			a := logs.Logger.Warn(err)
 			if a != nil {
-				see.Info(a)
+				logs.Logger.Error(a)
 			}
 		}
 	}()

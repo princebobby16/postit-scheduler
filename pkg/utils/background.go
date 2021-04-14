@@ -43,7 +43,7 @@ func HibernateSchedule(connection *sql.DB, schedule models.PostSchedule, namespa
 func ChangeScheduleStatus(connection *sql.DB, schedule models.PostSchedule, namespace string) bool {
 	stmt := fmt.Sprintf("UPDATE %s.schedule SET is_due = $1 WHERE schedule_id = $2;", namespace)
 	logs.Logger.Info("Updating the isDue schedule status")
-	_, err := connection.Exec(stmt, true, schedule.ScheduleId)
+	_, err := connection.Exec(stmt, true, &schedule.ScheduleId)
 	if err != nil {
 		_ = logs.Logger.Error(err)
 		return true
@@ -53,10 +53,8 @@ func ChangeScheduleStatus(connection *sql.DB, schedule models.PostSchedule, name
 
 func SchedulePosts(schedules <-chan *models.PostSchedule, postedToFacebook <-chan bool, postedToTwitter chan bool, postedToLinkedIn chan bool, facebookPost chan<- models.SinglePostWithProfiles, twitterPost chan models.SinglePostWithProfiles, linkedInPost chan models.SinglePostWithProfiles, connection *sql.DB, namespace string) {
 	// Listen for schedules from the other goroutine
-	var id string
 	for s := range schedules {
 		logs.Logger.Info("scheduling posts now ... looping through them.")
-		id = s.ScheduleId
 		for _, postId := range s.PostIds {
 			stmt := fmt.Sprintf(`SELECT post_id, post_message, post_images, image_paths, hash_tags FROM %s.post WHERE post_id = $1;`, namespace)
 			var post models.Post
@@ -133,12 +131,12 @@ func SchedulePosts(schedules <-chan *models.PostSchedule, postedToFacebook <-cha
 			logs.Logger.Info("waiting for next post for ", s.Duration, " seconds")
 			time.Sleep(time.Duration(s.Duration) * time.Second)
 		} // for loop s.PostIds
+		stmt := fmt.Sprintf("DELETE FROM general_schedule_table WHERE schedule_id = $1")
+		_, err := connection.Exec(stmt, s.ScheduleId)
+		if err != nil {
+			_ = logs.Logger.Error(err)
+		}
 	} // for loop schedules
-	stmt := fmt.Sprintf("DELETE FROM general_schedule_table WHERE schedule_id = $1")
-	_, err := connection.Exec(stmt, id)
-	if err != nil {
-		_ = logs.Logger.Error(err)
-	}
 
 	logs.Logger.Info("Schedule done")
 }
