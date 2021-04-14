@@ -86,11 +86,11 @@ func PostToFacebook(post models.SinglePostWithProfiles, namespace string, connec
 	return nil
 }
 
-func SetFacebookPostIdColumn(resp facebook.Result, namespace string, err error, id string, userId string, connection *sql.DB) error {
+func SetFacebookPostIdColumn(resp facebook.Result, namespace string, err error, postId string, fbUserId string, connection *sql.DB) error {
 	fbId := fmt.Sprintf("%s", resp.Get("id"))
 	if fbId != "" {
 		query := fmt.Sprintf(`UPDATE %s.post SET facebook_post_id = $1, facebook_user_id = $2 WHERE post_id = $3;`, namespace)
-		_, err = connection.Exec(query, &userId, &fbId, id)
+		_, err = connection.Exec(query, &fbId, &fbUserId, postId)
 		if err != nil {
 			return err
 		}
