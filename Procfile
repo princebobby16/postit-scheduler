@@ -1,1 +1,1 @@
-web: scheduler-microservice
+web: postit-scheduler
