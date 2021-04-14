@@ -17,51 +17,30 @@ func init() {
 		// Do nothing
 	}
 
-	file, err := os.Create(common)
+	_, err := os.Create(common)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	defer func() {
-		err = file.Close()
-		if err != nil {
-			log.Println(err)
-			return
-		}
-	}()
 	if _, err := os.Stat(critical); !os.IsNotExist(err) {
 		// Do nothing
 	}
 
-	file, err = os.Create(critical)
+	_, err = os.Create(critical)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	defer func() {
-		err = file.Close()
-		if err != nil {
-			log.Println(err)
-			return
-		}
-	}()
 
 	if _, err := os.Stat(errorLog); !os.IsNotExist(err) {
 		// Do nothing
 	}
 
-	file, err = os.Create(errorLog)
+	_, err = os.Create(errorLog)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	defer func() {
-		err = file.Close()
-		if err != nil {
-			log.Println(err)
-			return
-		}
-	}()
 
 	Logger = see.Disabled
 	loadAppConfig()
