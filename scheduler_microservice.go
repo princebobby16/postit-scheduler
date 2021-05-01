@@ -9,6 +9,7 @@ import (
 	"gitlab.com/pbobby001/postit-scheduler/db"
 	"gitlab.com/pbobby001/postit-scheduler/pkg/logs"
 	"golang.org/x/net/context"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -64,12 +65,28 @@ func main() {
 		// Good practice to set timeouts to avoid Slowloris attacks.
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
-		IdleTimeout:  time.Second * 6,
+		IdleTimeout:  time.Hour * 12,
 		Handler:      handlers.CORS(origins, headers, methods)(r), // Pass our instance of gorilla/mux in.
 	}
 
 	r.Use(middlewares.JSONMiddleware)
 	//r.Use(middlewares.JWTMiddleware)
+
+	go func() {
+		for {
+			ticker := time.NewTicker(30 * time.Second)
+			for t := range ticker.C {
+				resp, err := http.Get(os.Getenv("PING_URL"))
+				if err != nil {
+					_ = logs.Logger.Error("unable to ping")
+					continue
+				}
+				body, _ := ioutil.ReadAll(resp.Body)
+				logs.Logger.Info(string(body))
+				logs.Logger.Info("Pinging " + os.Getenv("PING_URL")+ t.String())
+			}
+		}
+	}()
 
 	defer db.Disconnect()
 	// Run our server in a goroutine so that it doesn't block.
@@ -78,7 +95,7 @@ func main() {
 		if err := server.ListenAndServe(); err != nil {
 			a := logs.Logger.Warn(err)
 			if a != nil {
-				logs.Logger.Error(a)
+				_ = logs.Logger.Error(a)
 			}
 		}
 	}()
